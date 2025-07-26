@@ -1,16 +1,22 @@
+import logging
 import azure.functions as func
 import json
 import joblib
 import numpy as np
 import os
 
-# Cargar modelo y escalador solo una vez (mejor performance)
-MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'modelo_final', 'modelo_kmeans.pkl')
-SCALER_PATH = os.path.join(os.path.dirname(__file__), '..', 'modelo_final', 'escalador.pkl')
+MODEL_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "modelo_final", "modelo_kmeans.pkl"
+)
+SCALER_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "modelo_final", "escalador.pkl"
+)
 modelo = joblib.load(MODEL_PATH)
 scaler = joblib.load(SCALER_PATH)
 
-DIST_PATH = os.path.join(os.path.dirname(__file__), '..', 'modelo_final', 'distancias_maximas.npy')
+DIST_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "modelo_final", "distancias_maximas.npy"
+)
 distancias_maximas = np.load(DIST_PATH)
 
 segmentos = {
@@ -18,10 +24,11 @@ segmentos = {
     1: "Clientes maduros con saldo medio y bajo gasto",
     2: "Adultos jóvenes de saldo medio-bajo",
     3: "Clientes premium con altísimo saldo y gasto",
-    4: "Jóvenes con bajo saldo y bajo consumo"
 }
 
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("Python HTTP trigger function processed a request.")
     try:
         data = req.get_json()
         edad = float(data["edad"])
@@ -42,16 +49,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         confianza = max(0, min(confianza, 1)) * 100  # porcentaje
 
         return func.HttpResponse(
-            json.dumps({
-                "cluster": cluster,
-                "descripcion": descripcion,
-                "confianza": confianza
-            }),
-            mimetype="application/json"
+            json.dumps(
+                {"cluster": cluster, "descripcion": descripcion, "confianza": confianza}
+            ),
+            mimetype="application/json",
         )
     except Exception as e:
         return func.HttpResponse(
-            json.dumps({"error": str(e)}),
-            status_code=400,
-            mimetype="application/json"
-        ) 
+            json.dumps({"error": str(e)}), status_code=400, mimetype="application/json"
+        )
